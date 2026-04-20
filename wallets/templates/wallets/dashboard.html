@@ -1,0 +1,335 @@
+{% load wallet_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Monitor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+
+        .page-title { font-weight: 700; letter-spacing: -0.5px; }
+
+        .section-card {
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .kpi-card {
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+            height: 100%;
+        }
+
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.4rem;
+        }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .wallet-link {
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .wallet-link:hover {
+            text-decoration: underline;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.82rem;
+        }
+
+        .table thead th {
+            white-space: nowrap;
+            font-weight: 600;
+            font-size: 0.84rem;
+        }
+
+        .table td {
+            vertical-align: middle;
+            font-size: 0.88rem;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .filter-grid .form-control,
+        .filter-grid .form-select {
+            min-height: 36px;
+            font-size: 0.84rem;
+            padding-top: 0.35rem;
+            padding-bottom: 0.35rem;
+        }
+
+        .filter-grid .btn {
+            min-height: 36px;
+            font-size: 0.82rem;
+            padding-top: 0.35rem;
+            padding-bottom: 0.35rem;
+        }
+
+        .card-fixed-height {
+            min-height: 520px;
+        }
+
+        .table-sm td,
+        .table-sm th {
+            padding-top: 0.55rem;
+            padding-bottom: 0.55rem;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        .summary-actions {
+            flex-wrap: wrap;
+        }
+
+        .copy-btn {
+            border: 1px solid #d0d7de;
+            background: #fff;
+            color: #495057;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            line-height: 1.2;
+            margin-left: 6px;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover {
+            background: #f1f3f5;
+        }
+
+        .inline-copy {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .small-muted {
+            font-size: 0.78rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4 py-md-5">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+                <h1 class="page-title mb-1">Wallet Monitor Dashboard</h1>
+                <p class="text-muted mb-0">Ethereum wallet monitoring overview</p>
+            </div>
+            <div class="d-flex gap-2 summary-actions">
+                <a href="{% url 'export_dashboard_summary_xlsx' %}" id="export-summary-btn" class="btn btn-outline-primary px-4">
+                    Export Summary XLSX
+                </a>
+                <a href="{% url 'sync_now' %}" class="btn btn-primary px-4">Sync Now</a>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success section-card" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="card kpi-card">
+                    <div class="card-body">
+                        <div class="kpi-label">Total Wallets</div>
+                        <div class="kpi-value">{{ total_wallets }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card kpi-card">
+                    <div class="card-body">
+                        <div class="kpi-label">Active Wallets</div>
+                        <div class="kpi-value">{{ active_wallets }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card kpi-card">
+                    <div class="card-body">
+                        <div class="kpi-label">Balance Snapshots</div>
+                        <div class="kpi-value">{{ total_balance_snapshots }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card kpi-card">
+                    <div class="card-body">
+                        <div class="kpi-label">Transactions</div>
+                        <div class="kpi-value">{{ total_transactions }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 align-items-stretch">
+            <div class="col-12 col-xxl-6">
+                <div class="card section-card card-fixed-height h-100">
+                    <div class="card-body p-4" id="dashboard-wallets-container">
+                        {% include "wallets/partials/dashboard_wallets_table.html" %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xxl-6">
+                <div class="card section-card card-fixed-height h-100">
+                    <div class="card-body p-4" id="dashboard-transactions-container">
+                        {% include "wallets/partials/dashboard_transactions_table.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const walletsContainer = document.getElementById("dashboard-wallets-container");
+        const dashboardTransactionsContainer = document.getElementById("dashboard-transactions-container");
+        const exportSummaryBtn = document.getElementById("export-summary-btn");
+
+        function copyText(value) {
+            navigator.clipboard.writeText(value).then(() => {});
+        }
+
+        function bindCopyButtons(scope = document) {
+            scope.querySelectorAll(".copy-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    copyText(btn.dataset.copy);
+                    const original = btn.textContent;
+                    btn.textContent = "Copied";
+                    setTimeout(() => {
+                        btn.textContent = original;
+                    }, 800);
+                });
+            });
+        }
+
+        function buildDashboardWalletParams(page = 1) {
+            const form = walletsContainer.querySelector("#dashboard-wallets-form");
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            params.set("wallet_page", page);
+            return params;
+        }
+
+        function buildDashboardTransactionParams(page = 1) {
+            const form = dashboardTransactionsContainer.querySelector("#dashboard-transactions-form");
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            params.set("dtx_page", page);
+            return params;
+        }
+
+        function updateExportSummaryHref() {
+            const walletParams = buildDashboardWalletParams(1);
+            const txParams = buildDashboardTransactionParams(1);
+            const allParams = new URLSearchParams();
+
+            for (const [key, value] of walletParams.entries()) allParams.set(key, value);
+            for (const [key, value] of txParams.entries()) allParams.set(key, value);
+
+            exportSummaryBtn.href = `{% url 'export_dashboard_summary_xlsx' %}?${allParams.toString()}`;
+        }
+
+        async function loadDashboardWallets(page = 1) {
+            const params = buildDashboardWalletParams(page);
+            const response = await fetch(`{% url 'dashboard_wallets_partial' %}?${params.toString()}`);
+            walletsContainer.innerHTML = await response.text();
+            bindDashboardWalletControls();
+            bindCopyButtons(walletsContainer);
+            updateExportSummaryHref();
+        }
+
+        async function loadDashboardTransactions(page = 1) {
+            const params = buildDashboardTransactionParams(page);
+            const response = await fetch(`{% url 'dashboard_transactions_partial' %}?${params.toString()}`);
+            dashboardTransactionsContainer.innerHTML = await response.text();
+            bindDashboardTransactionControls();
+            bindCopyButtons(dashboardTransactionsContainer);
+            updateExportSummaryHref();
+        }
+
+        function bindDashboardWalletControls() {
+            const form = walletsContainer.querySelector("#dashboard-wallets-form");
+            const resetBtn = walletsContainer.querySelector("#wallets-reset-btn");
+            const perPageSelect = form.querySelector('select[name="wallet_per_page"]');
+            const pageButtons = walletsContainer.querySelectorAll(".wallet-page-btn");
+
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                loadDashboardWallets(1);
+            });
+
+            resetBtn.addEventListener("click", () => {
+                form.reset();
+                loadDashboardWallets(1);
+            });
+
+            perPageSelect.addEventListener("change", () => loadDashboardWallets(1));
+
+            pageButtons.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    loadDashboardWallets(btn.dataset.page);
+                });
+            });
+        }
+
+        function bindDashboardTransactionControls() {
+            const form = dashboardTransactionsContainer.querySelector("#dashboard-transactions-form");
+            const resetBtn = dashboardTransactionsContainer.querySelector("#dtx-reset-btn");
+            const perPageSelect = form.querySelector('select[name="dtx_per_page"]');
+            const pageButtons = dashboardTransactionsContainer.querySelectorAll(".dtx-page-btn");
+
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                loadDashboardTransactions(1);
+            });
+
+            resetBtn.addEventListener("click", () => {
+                form.reset();
+                loadDashboardTransactions(1);
+            });
+
+            perPageSelect.addEventListener("change", () => loadDashboardTransactions(1));
+
+            pageButtons.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    loadDashboardTransactions(btn.dataset.page);
+                });
+            });
+        }
+
+        bindDashboardWalletControls();
+        bindDashboardTransactionControls();
+        bindCopyButtons(document);
+        updateExportSummaryHref();
+    </script>
+</body>
+</html>

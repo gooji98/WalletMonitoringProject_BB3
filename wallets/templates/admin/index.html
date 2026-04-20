@@ -1,0 +1,119 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .admin-home-wrap {
+        margin-top: 20px;
+    }
+
+    .admin-hero {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.05);
+    }
+
+    .admin-hero h1 {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    .admin-hero p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .quick-card {
+        display: block;
+        text-decoration: none;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.04);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .quick-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 0.85rem rgba(0, 0, 0, 0.08);
+        text-decoration: none;
+    }
+
+    .quick-card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 6px;
+    }
+
+    .quick-card-text {
+        color: #6b7280;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .admin-section-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 12px 0;
+    }
+
+    .admin-default-modules {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.04);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-home-wrap">
+    <div class="admin-hero">
+        <h1>Operations Admin Home</h1>
+        <p>Quick access to wallet operations, monitoring records, and internal admin tools.</p>
+    </div>
+
+    <div class="quick-grid">
+        <a href="/admin/wallets/wallet/" class="quick-card">
+            <div class="quick-card-title">Wallets</div>
+            <div class="quick-card-text">Manage monitored wallets, assign admins, review live wallet status, and run operations.</div>
+        </a>
+
+        <a href="/admin/wallets/balancesnapshot/" class="quick-card">
+            <div class="quick-card-title">Balance Snapshots</div>
+            <div class="quick-card-text">Inspect historical balance records, review fetched timestamps, and audit wallet balance changes.</div>
+        </a>
+
+        <a href="/admin/wallets/transactionsnapshot/" class="quick-card">
+            <div class="quick-card-title">Transactions</div>
+            <div class="quick-card-text">Browse transaction history, filter error records, and inspect destination and value details.</div>
+        </a>
+
+        <a href="/admin/auth/user/" class="quick-card">
+            <div class="quick-card-title">Users</div>
+            <div class="quick-card-text">Manage internal staff, operators, and administrators that are assigned to wallets.</div>
+        </a>
+    </div>
+
+    <div class="admin-default-modules">
+        <div class="admin-section-title">All Applications</div>
+        {{ block.super }}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% load wallet_extras %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="section-title mb-0">Recent Balance Snapshots</h2>
+    <a href="{% url 'export_wallet_snapshots_csv' wallet.id %}" class="btn btn-sm btn-outline-primary">
+        Export Snapshots CSV
+    </a>
+</div>
+
+<form id="wallet-snapshots-form" class="row g-2 filter-grid mb-3">
+    <div class="col-12 col-md-7">
+        <input type="text" class="form-control" name="snapshot_q" value="{{ snapshot_q }}" placeholder="Search by balance or fetched date">
+    </div>
+
+    <div class="col-6 col-md-2">
+        <select class="form-select" name="snapshot_per_page">
+            <option value="10" {% if snapshot_per_page == 10 %}selected{% endif %}>10 rows</option>
+            <option value="20" {% if snapshot_per_page == 20 %}selected{% endif %}>20 rows</option>
+            <option value="100" {% if snapshot_per_page == 100 %}selected{% endif %}>100 rows</option>
+        </select>
+    </div>
+
+    <div class="col-6 col-md-3 d-grid d-md-flex gap-2">
+        <button type="submit" class="btn btn-dark flex-fill">Apply</button>
+        <button type="button" id="snapshots-reset-btn" class="btn btn-outline-secondary flex-fill">Reset</button>
+    </div>
+</form>
+
+<div class="table-wrap">
+    <table class="table table-hover table-sm align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Balance (ETH)</th>
+                <th>Fetched At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for snapshot in recent_snapshots %}
+            <tr>
+                <td>{{ snapshot.balance_eth|format_crypto }}</td>
+                <td class="nowrap">{{ snapshot.fetched_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2" class="text-center text-muted py-4">No balance snapshots found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if recent_snapshots.paginator.num_pages > 1 %}
+<div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+    <div class="text-muted">
+        Page {{ recent_snapshots.number }} of {{ recent_snapshots.paginator.num_pages }}
+    </div>
+    <div class="d-flex gap-2">
+        {% if recent_snapshots.has_previous %}
+            <button type="button" class="btn btn-sm btn-outline-secondary snapshot-page-btn" data-page="{{ recent_snapshots.previous_page_number }}">
+                Previous
+            </button>
+        {% endif %}
+        {% if recent_snapshots.has_next %}
+            <button type="button" class="btn btn-sm btn-outline-secondary snapshot-page-btn" data-page="{{ recent_snapshots.next_page_number }}">
+                Next
+            </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
