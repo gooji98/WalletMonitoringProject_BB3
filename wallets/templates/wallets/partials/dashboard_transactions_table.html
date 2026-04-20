@@ -51,7 +51,7 @@
                         <button type="button" class="copy-btn" data-copy="{{ tx.tx_hash }}">Copy</button>
                     </span>
                 </td>
-                <td>{{ tx.value_eth|format_crypto }}</td>
+                <td class="mono">{{ tx.value_eth|format_crypto:8 }}</td>
                 <td>
                     {% if tx.is_error %}
                         <span class="badge text-bg-danger">Error</span>
