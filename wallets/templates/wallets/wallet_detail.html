@@ -1,88 +1,81 @@
 {% load wallet_extras %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallet Detail</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
+        :root {
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6c757d;
+            --border: #e5e7eb;
+            --shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+        }
 
+        html[data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #111827;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --border: #334155;
+            --shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.35);
+        }
+
+        body { background-color: var(--bg); color: var(--text); }
         .page-title { font-weight: 700; letter-spacing: -0.5px; }
-
         .section-card {
-            border: 0;
+            border: 1px solid var(--border);
             border-radius: 16px;
-            box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+            box-shadow: var(--shadow);
             overflow: hidden;
+            background: var(--card);
+            color: var(--text);
         }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0;
-        }
-
-        .info-label {
-            font-size: 0.9rem;
-            color: #6c757d;
-            margin-bottom: 0.25rem;
-        }
-
-        .info-value {
-            font-weight: 500;
-            word-break: break-word;
-        }
-
+        .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0; }
+        .info-label { font-size: 0.86rem; color: var(--muted); margin-bottom: 0.25rem; }
+        .info-value { font-weight: 500; word-break: break-word; font-size: 0.95rem; }
         .mono {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 0.92rem;
+            font-size: 0.82rem;
         }
-
-        .table thead th {
-            white-space: nowrap;
-            font-weight: 600;
-            font-size: 0.95rem;
+        .table thead th { white-space: nowrap; font-weight: 600; font-size: 0.84rem; }
+        .table td { vertical-align: middle; font-size: 0.88rem; }
+        .table-wrap { overflow-x: auto; }
+        .chart-wrap { position: relative; width: 100%; min-height: 320px; }
+        .pie-wrap { position: relative; width: 100%; min-height: 280px; }
+        .filter-grid .form-control, .filter-grid .form-select {
+            min-height: 36px; font-size: 0.84rem; padding-top: 0.35rem; padding-bottom: 0.35rem;
+            background: var(--card); color: var(--text); border-color: var(--border);
         }
-
-        .table td {
-            vertical-align: middle;
+        .filter-grid .btn { min-height: 36px; font-size: 0.82rem; padding-top: 0.35rem; padding-bottom: 0.35rem; }
+        .nowrap { white-space: nowrap; }
+        .table-sm td, .table-sm th { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+        .card-fixed-height { min-height: 560px; }
+        .top-actions { flex-wrap: wrap; }
+        .copy-btn {
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            line-height: 1.2;
+            margin-left: 6px;
+            cursor: pointer;
         }
-
-        .table-wrap {
-            overflow-x: auto;
+        .copy-btn:hover { opacity: 0.85; }
+        .inline-copy { display: inline-flex; align-items: center; }
+        .table, .table > :not(caption) > * > * { color: var(--text); border-color: var(--border); }
+        .table-light, .table-light > th, .table-light > td {
+            --bs-table-bg: color-mix(in srgb, var(--card) 92%, #e9ecef 8%);
+            color: var(--text);
         }
-
-        .chart-wrap {
-            position: relative;
-            width: 100%;
-            min-height: 320px;
-        }
-
-        .filter-grid .form-control,
-        .filter-grid .form-select,
-        .filter-grid .btn {
-            min-height: 42px;
-        }
-
-        .nowrap {
-            white-space: nowrap;
-        }
-
-        .table-sm td,
-        .table-sm th {
-            padding-top: 0.65rem;
-            padding-bottom: 0.65rem;
-        }
-
-        .card-fixed-height {
-            min-height: 560px;
-        }
-
-        .top-actions {
-            flex-wrap: wrap;
-        }
+        .text-muted { color: var(--muted) !important; }
+        .theme-toggle { min-width: 120px; }
     </style>
 </head>
 <body>
@@ -90,9 +83,10 @@
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
             <div>
                 <h1 class="page-title mb-1">Wallet Detail</h1>
-                <p class="text-muted mb-0">Detailed view for walletes</p>
+                <p class="text-muted mb-0">Detailed view for a single monitored wallet</p>
             </div>
             <div class="d-flex gap-2 top-actions">
+                <button type="button" id="theme-toggle" class="btn btn-outline-secondary theme-toggle">Dark Mode</button>
                 <a href="{% url 'sync_single_wallet' wallet.id %}" class="btn btn-primary">Sync This Wallet</a>
                 <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
             </div>
@@ -107,7 +101,7 @@
         {% endif %}
 
         <div class="card section-card mb-4">
-            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+            <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
                 <h2 class="section-title">Wallet Information</h2>
             </div>
             <div class="card-body px-4 pb-4">
@@ -153,7 +147,7 @@
                         <div class="info-label">Latest Balance (USD)</div>
                         <div class="info-value">
                             {% if latest_balance_usd is not None %}
-                                {{ latest_balance_usd|format_crypto:2 }}
+                                ${{ latest_balance_usd|format_crypto:2 }}
                             {% else %}
                                 -
                             {% endif %}
@@ -184,13 +178,31 @@
             </div>
         </div>
 
-        <div class="card section-card mb-4">
-            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
-                <h2 class="section-title">Balance Trend</h2>
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-xl-7">
+                <div class="card section-card h-100">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+                        <h2 class="section-title">Balance Trend</h2>
+                    </div>
+                    <div class="card-body px-4 pb-4">
+                        <div class="chart-wrap">
+                            <canvas id="balanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body px-4 pb-4">
-                <div class="chart-wrap">
-                    <canvas id="balanceChart"></canvas>
+
+            <div class="col-12 col-xl-5">
+                <div class="card section-card h-100">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+                        <h2 class="section-title">Transaction Status Distribution</h2>
+                    </div>
+                    <div class="card-body px-4 pb-4">
+                        <div class="pie-wrap">
+                            <canvas id="walletPieChart"></canvas>
+                        </div>
+                        <div class="text-muted mt-3">Total transactions: {{ total_tx_count }}</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -216,13 +228,35 @@
 
     {{ chart_labels|json_script:"chart-labels" }}
     {{ chart_values|json_script:"chart-values" }}
+    {{ wallet_pie_labels|json_script:"wallet-pie-labels" }}
+    {{ wallet_pie_values|json_script:"wallet-pie-values" }}
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        const themeToggleBtn = document.getElementById("theme-toggle");
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            themeToggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
+        }
+
+        const savedTheme = localStorage.getItem("wallet-theme") || "dark";
+        applyTheme(savedTheme);
+
+        themeToggleBtn.addEventListener("click", () => {
+            const current = document.documentElement.getAttribute("data-theme");
+            const next = current === "dark" ? "light" : "dark";
+            localStorage.setItem("wallet-theme", next);
+            applyTheme(next);
+        });
+
         const chartLabels = JSON.parse(document.getElementById("chart-labels").textContent);
         const chartValues = JSON.parse(document.getElementById("chart-values").textContent);
+        const walletPieLabels = JSON.parse(document.getElementById("wallet-pie-labels").textContent);
+        const walletPieValues = JSON.parse(document.getElementById("wallet-pie-values").textContent);
 
         const ctx = document.getElementById("balanceChart");
+        const pieCtx = document.getElementById("walletPieChart");
 
         if (ctx && chartLabels.length > 0 && chartValues.length > 0) {
             new Chart(ctx, {
@@ -247,6 +281,44 @@
             });
         }
 
+        if (pieCtx && walletPieLabels.length > 0 && walletPieValues.length > 0) {
+            new Chart(pieCtx, {
+                type: "doughnut",
+                data: {
+                    labels: walletPieLabels,
+                    datasets: [{
+                        data: walletPieValues
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                }
+            });
+        }
+
+        function copyText(value) {
+            navigator.clipboard.writeText(value).then(() => {});
+        }
+
+        function bindCopyButtons(scope = document) {
+            scope.querySelectorAll(".copy-btn").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    copyText(btn.dataset.copy);
+                    const original = btn.textContent;
+                    btn.textContent = "Copied";
+                    setTimeout(() => {
+                        btn.textContent = original;
+                    }, 800);
+                });
+            });
+        }
+
         const walletId = "{{ wallet.id }}";
         const snapshotsContainer = document.getElementById("snapshots-container");
         const transactionsContainer = document.getElementById("transactions-container");
@@ -259,6 +331,7 @@
             const response = await fetch(`/wallets/${walletId}/snapshots/?${params.toString()}`);
             snapshotsContainer.innerHTML = await response.text();
             bindSnapshotControls();
+            bindCopyButtons(snapshotsContainer);
         }
 
         async function loadTransactions(page = 1) {
@@ -269,6 +342,7 @@
             const response = await fetch(`/wallets/${walletId}/transactions/?${params.toString()}`);
             transactionsContainer.innerHTML = await response.text();
             bindTransactionControls();
+            bindCopyButtons(transactionsContainer);
         }
 
         function bindSnapshotControls() {
@@ -319,6 +393,7 @@
 
         bindSnapshotControls();
         bindTransactionControls();
+        bindCopyButtons(document);
     </script>
 </body>
 </html>

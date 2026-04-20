@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
@@ -18,7 +19,6 @@ from .sync import sync_all_active_wallets, sync_wallet
 
 User = get_user_model()
 
-
 ALLOWED_PAGE_SIZES = {"10", "20", "100"}
 
 
@@ -27,20 +27,45 @@ def get_per_page(request, key, default=10):
     return int(raw) if raw in ALLOWED_PAGE_SIZES else default
 
 
+def get_eth_usd_rate():
+    return Decimal(str(getattr(settings, "ETH_USD_RATE", 3000)))
+
+
+def get_usd_class(value):
+    if value is None:
+        return "text-muted"
+    if value >= Decimal("100000"):
+        return "text-success fw-semibold"
+    if value >= Decimal("10000"):
+        return "text-primary fw-semibold"
+    if value >= Decimal("1000"):
+        return "text-warning-emphasis fw-semibold"
+    return "text-body"
+
+
 def build_wallet_rows(wallets_queryset):
-    eth_usd_rate = Decimal(str(getattr(settings, "ETH_USD_RATE", 3000)))
+    eth_usd_rate = get_eth_usd_rate()
+    now = timezone.now()
     rows = []
 
     for wallet in wallets_queryset:
         latest_balance = wallet.balance_snapshots.order_by("-fetched_at").first()
         balance_eth = latest_balance.balance_eth if latest_balance else None
         balance_usd = (balance_eth * eth_usd_rate) if balance_eth is not None else None
+        last_balance_update = latest_balance.fetched_at if latest_balance else None
+
+        is_stale = False
+        if last_balance_update:
+            is_stale = (now - last_balance_update).total_seconds() > 3600
 
         rows.append({
             "wallet": wallet,
             "latest_balance": latest_balance,
             "balance_eth": balance_eth,
             "balance_usd": balance_usd,
+            "balance_usd_class": get_usd_class(balance_usd),
+            "last_balance_update": last_balance_update,
+            "is_stale": is_stale,
         })
 
     return rows
@@ -189,6 +214,10 @@ def dashboard(request):
     networks = Wallet.objects.order_by("network").values_list("network", flat=True).distinct()
     admins = User.objects.filter(managed_wallets__isnull=False).distinct().order_by("username")
 
+    all_wallet_rows = build_wallet_rows(wallets_queryset[:50])
+    pie_labels = [row["wallet"].label or row["wallet"].address[:10] for row in all_wallet_rows if row["balance_eth"] is not None]
+    pie_values = [float(row["balance_eth"]) for row in all_wallet_rows if row["balance_eth"] is not None]
+
     context = {
         "total_wallets": Wallet.objects.count(),
         "active_wallets": Wallet.objects.filter(is_active=True).count(),
@@ -209,13 +238,16 @@ def dashboard(request):
         "dtx_per_page": dtx_per_page,
         "dtx_q": request.GET.get("dtx_q", "").strip(),
         "dtx_status": request.GET.get("dtx_status", "").strip(),
+
+        "dashboard_pie_labels": pie_labels,
+        "dashboard_pie_values": pie_values,
     }
 
     return render(request, "wallets/dashboard.html", context)
 
 
 def dashboard_wallets_partial(request):
-    wallets_queryset, wallets_page, wallet_rows, wallet_per_page = get_dashboard_wallets_page(request)
+    _, wallets_page, wallet_rows, wallet_per_page = get_dashboard_wallets_page(request)
 
     networks = Wallet.objects.order_by("network").values_list("network", flat=True).distinct()
     admins = User.objects.filter(managed_wallets__isnull=False).distinct().order_by("username")
@@ -272,8 +304,15 @@ def wallet_detail(request, wallet_id):
         for snapshot in balance_history_for_chart
     ]
 
-    eth_usd_rate = Decimal(str(getattr(settings, "ETH_USD_RATE", 3000)))
+    eth_usd_rate = get_eth_usd_rate()
     latest_balance_usd = (latest_balance.balance_eth * eth_usd_rate) if latest_balance else None
+
+    total_tx_count = wallet.transaction_snapshots.count()
+    success_tx_count = wallet.transaction_snapshots.filter(is_error=False).count()
+    error_tx_count = wallet.transaction_snapshots.filter(is_error=True).count()
+
+    wallet_pie_labels = ["Success", "Error"]
+    wallet_pie_values = [success_tx_count, error_tx_count]
 
     context = {
         "wallet": wallet,
@@ -291,6 +330,9 @@ def wallet_detail(request, wallet_id):
 
         "chart_labels": chart_labels,
         "chart_values": chart_values,
+        "wallet_pie_labels": wallet_pie_labels,
+        "wallet_pie_values": wallet_pie_values,
+        "total_tx_count": total_tx_count,
     }
 
     return render(request, "wallets/wallet_detail.html", context)
@@ -427,7 +469,7 @@ def export_dashboard_summary_xlsx(request):
     ]
     ws_wallets.append(wallet_headers)
 
-    eth_usd_rate = Decimal(str(getattr(settings, "ETH_USD_RATE", 3000)))
+    eth_usd_rate = get_eth_usd_rate()
 
     for wallet in wallets_queryset.select_related("assigned_admin"):
         latest_balance = wallet.balance_snapshots.order_by("-fetched_at").first()

@@ -52,12 +52,13 @@
     <table class="table table-hover table-sm align-middle mb-0">
         <thead class="table-light">
             <tr>
-                <th>Label</th>
+                <th>Wallet</th>
                 <th>Address</th>
                 <th>Network</th>
                 <th>Admin</th>
-                <th>Balance</th>
-                <th>Balance USD</th>
+                <th>Balance (ETH)</th>
+                <th>Value (USD)</th>
+                <th>Last Balance Update</th>
                 <th>Status</th>
                 <th>Last Synced</th>
             </tr>
@@ -70,23 +71,57 @@
                         {{ row.wallet.label|default:"-" }}
                     </a>
                 </td>
-                <td class="mono nowrap">{{ row.wallet.address|slice:":8" }}...{{ row.wallet.address|slice:"-6:" }}</td>
-                <td>{{ row.wallet.network }}</td>
-                <td>{{ row.wallet.assigned_admin.username|default:"-" }}</td>
+
+                <td class="nowrap">
+                    <span class="inline-copy mono">
+                        {{ row.wallet.address|slice:":8" }}...{{ row.wallet.address|slice:"-6:" }}
+                        <button type="button" class="copy-btn" data-copy="{{ row.wallet.address }}">Copy</button>
+                    </span>
+                </td>
+
+                <td>
+                    <span class="badge text-bg-light border">{{ row.wallet.network }}</span>
+                </td>
+
+                <td>
+                    {% if row.wallet.assigned_admin %}
+                        <div>{{ row.wallet.assigned_admin.get_full_name|default:row.wallet.assigned_admin.username }}</div>
+                        {% if row.wallet.assigned_admin.get_full_name %}
+                            <div class="small-muted">@{{ row.wallet.assigned_admin.username }}</div>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+
                 <td>
                     {% if row.balance_eth is not None %}
-                        {{ row.balance_eth|format_crypto }}
+                        {{ row.balance_eth|format_crypto:6 }}
                     {% else %}
                         -
                     {% endif %}
                 </td>
-                <td>
+
+                <td class="{{ row.balance_usd_class }}">
                     {% if row.balance_usd is not None %}
-                        {{ row.balance_usd|format_crypto:2 }}
+                        ${{ row.balance_usd|format_crypto:2 }}
                     {% else %}
                         -
                     {% endif %}
                 </td>
+
+                <td class="nowrap">
+                    {% if row.last_balance_update %}
+                        {% if row.is_stale %}
+                            <span class="text-warning-emphasis">{{ row.last_balance_update|date:"Y-m-d H:i" }}</span>
+                        {% else %}
+                            {{ row.last_balance_update|date:"Y-m-d H:i" }}
+                        {% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
                 <td>
                     {% if row.wallet.is_active %}
                         <span class="badge text-bg-success">Active</span>
@@ -94,6 +129,7 @@
                         <span class="badge text-bg-secondary">Inactive</span>
                     {% endif %}
                 </td>
+
                 <td class="nowrap">
                     {% if row.wallet.last_synced_at %}
                         {{ row.wallet.last_synced_at|date:"Y-m-d H:i" }}
@@ -104,7 +140,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="text-center text-muted py-4">No wallets found.</td>
+                <td colspan="9" class="text-center text-muted py-4">No wallets found.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -122,6 +158,7 @@
                 Previous
             </button>
         {% endif %}
+
         {% if wallets_page.has_next %}
             <button type="button" class="btn btn-sm btn-outline-secondary wallet-page-btn" data-page="{{ wallets_page.next_page_number }}">
                 Next

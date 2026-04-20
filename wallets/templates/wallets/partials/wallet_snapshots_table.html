@@ -36,7 +36,7 @@
         <tbody>
             {% for snapshot in recent_snapshots %}
             <tr>
-                <td>{{ snapshot.balance_eth|format_crypto }}</td>
+                <td>{{ snapshot.balance_eth|format_crypto:8 }}</td>
                 <td class="nowrap">{{ snapshot.fetched_at|date:"Y-m-d H:i" }}</td>
             </tr>
             {% empty %}
