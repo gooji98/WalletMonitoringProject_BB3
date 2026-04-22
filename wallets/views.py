@@ -1,7 +1,8 @@
 import csv
 from decimal import Decimal
 from io import BytesIO
-
+from django.http import JsonResponse
+from django.db.models import Max
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -12,10 +13,15 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.styles import Font
+from .services import CoinGeckoService
+
+from django.http import JsonResponse
+from django.utils import timezone
+from .models import Wallet, BalanceSnapshot, TransactionSnapshot, SyncLog
 
 from .models import Wallet, BalanceSnapshot, TransactionSnapshot
 from .sync import sync_all_active_wallets, sync_wallet
-
+from .services import CoinGeckoService
 
 User = get_user_model()
 
@@ -28,7 +34,10 @@ def get_per_page(request, key, default=10):
 
 
 def get_eth_usd_rate():
-    return Decimal(str(getattr(settings, "ETH_USD_RATE", 3000)))
+    try:
+        return CoinGeckoService().get_eth_usd_price()
+    except Exception:
+        return Decimal(str(getattr(settings, "ETH_USD_RATE", 3000)))
 
 
 def get_usd_class(value):
@@ -281,7 +290,7 @@ def dashboard_transactions_partial(request):
 
 
 def sync_now(request):
-    sync_all_active_wallets()
+    sync_all_active_wallets(source="manual_dashboard")
     messages.success(request, "Wallet sync completed successfully.")
     return redirect("dashboard")
 
@@ -545,6 +554,163 @@ def export_dashboard_summary_xlsx(request):
 
 def sync_single_wallet(request, wallet_id):
     wallet = get_object_or_404(Wallet, id=wallet_id)
-    sync_wallet(wallet)
-    messages.success(request, f"Wallet '{wallet.label or wallet.address}' synced successfully.")
+    started_at = timezone.now()
+
+    try:
+        sync_wallet(wallet, source="manual_wallet_detail")
+
+        SyncLog.objects.create(
+            wallet=wallet,
+            status="success",
+            started_at=started_at,
+            finished_at=timezone.now(),
+            message="Wallet synced successfully from wallet detail page.",
+            source="manual_wallet_detail",
+        )
+
+        messages.success(request, f"Wallet '{wallet.label or wallet.address}' synced successfully.")
+    except Exception as exc:
+        SyncLog.objects.create(
+            wallet=wallet,
+            status="failed",
+            started_at=started_at,
+            finished_at=timezone.now(),
+            message=str(exc),
+            source="manual_wallet_detail",
+        )
+
+        messages.error(request, f"Wallet sync failed: {exc}")
+
     return redirect("wallet_detail", wallet_id=wallet.id)
+
+def dashboard_realtime_data(request):
+    wallets_queryset = get_dashboard_wallets_queryset(request)
+    wallet_rows = build_wallet_rows(wallets_queryset[:50])
+
+    pie_labels = [
+        row["wallet"].label or row["wallet"].address[:10]
+        for row in wallet_rows
+        if row["balance_eth"] is not None
+    ]
+    pie_values = [
+        float(row["balance_eth"])
+        for row in wallet_rows
+        if row["balance_eth"] is not None
+    ]
+
+    return JsonResponse({
+        "kpis": {
+            "total_wallets": Wallet.objects.count(),
+            "active_wallets": Wallet.objects.filter(is_active=True).count(),
+            "total_balance_snapshots": BalanceSnapshot.objects.count(),
+            "total_transactions": TransactionSnapshot.objects.count(),
+        },
+        "pie": {
+            "labels": pie_labels,
+            "values": pie_values,
+        },
+        "latest_wallet_sync": Wallet.objects.aggregate(last_sync=Max("last_synced_at"))["last_sync"].isoformat() if Wallet.objects.aggregate(last_sync=Max("last_synced_at"))["last_sync"] else None,
+    })
+
+
+def wallet_realtime_data(request, wallet_id):
+    wallet = get_object_or_404(Wallet.objects.select_related("assigned_admin"), id=wallet_id)
+    latest_balance = wallet.balance_snapshots.order_by("-fetched_at").first()
+
+    chart_history = list(wallet.balance_snapshots.order_by("-fetched_at")[:10])[::-1]
+    chart_labels = [snapshot.fetched_at.strftime("%Y-%m-%d %H:%M") for snapshot in chart_history]
+    chart_values = [float(snapshot.balance_eth) for snapshot in chart_history]
+
+    eth_usd_rate = get_eth_usd_rate()
+    latest_balance_usd = (latest_balance.balance_eth * eth_usd_rate) if latest_balance else None
+
+    success_tx_count = wallet.transaction_snapshots.filter(is_error=False).count()
+    error_tx_count = wallet.transaction_snapshots.filter(is_error=True).count()
+
+    return JsonResponse({
+        "wallet": {
+            "label": wallet.label or "-",
+            "network": wallet.network,
+            "assigned_admin": wallet.assigned_admin.username if wallet.assigned_admin else "-",
+            "is_active": wallet.is_active,
+            "latest_balance_eth": str(latest_balance.balance_eth) if latest_balance else "-",
+            "latest_balance_usd": str(latest_balance_usd) if latest_balance_usd is not None else "-",
+            "address": wallet.address,
+            "created_at": wallet.created_at.strftime("%Y-%m-%d %H:%M"),
+            "last_synced_at": wallet.last_synced_at.strftime("%Y-%m-%d %H:%M") if wallet.last_synced_at else "Never",
+        },
+        "line_chart": {
+            "labels": chart_labels,
+            "values": chart_values,
+        },
+        "pie_chart": {
+            "labels": ["Success", "Error"],
+            "values": [success_tx_count, error_tx_count],
+        },
+        "total_tx_count": wallet.transaction_snapshots.count(),
+    })
+
+def dashboard_realtime_data(request):
+    wallets_queryset = get_dashboard_wallets_queryset(request)
+    wallet_rows = build_wallet_rows(wallets_queryset[:50])
+
+    pie_labels = [
+        row["wallet"].label or row["wallet"].address[:10]
+        for row in wallet_rows
+        if row["balance_eth"] is not None
+    ]
+    pie_values = [
+        float(row["balance_eth"])
+        for row in wallet_rows
+        if row["balance_eth"] is not None
+    ]
+
+    return JsonResponse({
+        "kpis": {
+            "total_wallets": Wallet.objects.count(),
+            "active_wallets": Wallet.objects.filter(is_active=True).count(),
+            "total_balance_snapshots": BalanceSnapshot.objects.count(),
+            "total_transactions": TransactionSnapshot.objects.count(),
+        },
+        "pie": {
+            "labels": pie_labels,
+            "values": pie_values,
+        },
+    })
+
+def wallet_realtime_data(request, wallet_id):
+    wallet = get_object_or_404(Wallet.objects.select_related("assigned_admin"), id=wallet_id)
+    latest_balance = wallet.balance_snapshots.order_by("-fetched_at").first()
+
+    chart_history = list(wallet.balance_snapshots.order_by("-fetched_at")[:10])[::-1]
+    chart_labels = [snapshot.fetched_at.strftime("%Y-%m-%d %H:%M") for snapshot in chart_history]
+    chart_values = [float(snapshot.balance_eth) for snapshot in chart_history]
+
+    eth_usd_rate = get_eth_usd_rate()
+    latest_balance_usd = (latest_balance.balance_eth * eth_usd_rate) if latest_balance else None
+
+    success_tx_count = wallet.transaction_snapshots.filter(is_error=False).count()
+    error_tx_count = wallet.transaction_snapshots.filter(is_error=True).count()
+
+    return JsonResponse({
+        "wallet": {
+            "label": wallet.label or "-",
+            "network": wallet.network,
+            "assigned_admin": wallet.assigned_admin.username if wallet.assigned_admin else "-",
+            "is_active": wallet.is_active,
+            "latest_balance_eth": str(latest_balance.balance_eth) if latest_balance else "-",
+            "latest_balance_usd": str(latest_balance_usd) if latest_balance_usd is not None else "-",
+            "address": wallet.address,
+            "created_at": wallet.created_at.strftime("%Y-%m-%d %H:%M"),
+            "last_synced_at": wallet.last_synced_at.strftime("%Y-%m-%d %H:%M") if wallet.last_synced_at else "Never",
+        },
+        "line_chart": {
+            "labels": chart_labels,
+            "values": chart_values,
+        },
+        "pie_chart": {
+            "labels": ["Success", "Error"],
+            "values": [success_tx_count, error_tx_count],
+        },
+        "total_tx_count": wallet.transaction_snapshots.count(),
+    })

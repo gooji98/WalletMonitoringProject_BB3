@@ -223,6 +223,47 @@
             color: #60a5fa;
         }
 
+        .action-btn {
+            min-width: 168px;
+            border-radius: 999px;
+            padding: 0.7rem 1.2rem;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, var(--card), var(--card-2));
+            color: var(--text);
+            box-shadow: var(--shadow);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            border-color: #60a5fa;
+            color: #60a5fa;
+        }
+
+        .back-btn {
+            min-width: 168px;
+            border-radius: 999px;
+            padding: 0.7rem 1.2rem;
+            font-weight: 700;
+            color: #ffffff !important;
+            border: 0;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(37, 99, 235, 0.28);
+            opacity: 0.96;
+            color: #ffffff !important;
+        }
+
         .alert {
             background: rgba(34, 197, 94, 0.12);
             border: 1px solid rgba(34, 197, 94, 0.28);
@@ -239,8 +280,7 @@
             </div>
             <div class="d-flex gap-2 top-actions">
                 <button type="button" id="theme-toggle" class="btn theme-toggle">🌙 Dark mode</button>
-                <a href="{% url 'sync_single_wallet' wallet.id %}" class="btn btn-primary">Sync This Wallet</a>
-                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                <a href="{% url 'dashboard' %}" class="back-btn">Back to Dashboard</a>
             </div>
         </div>
 
@@ -260,22 +300,22 @@
                 <div class="row g-4">
                     <div class="col-md-4">
                         <div class="info-label">Label</div>
-                        <div class="info-value">{{ wallet.label|default:"-" }}</div>
+                        <div class="info-value" id="wallet-label">{{ wallet.label|default:"-" }}</div>
                     </div>
 
                     <div class="col-md-4">
                         <div class="info-label">Network</div>
-                        <div class="info-value">{{ wallet.network }}</div>
+                        <div class="info-value" id="wallet-network">{{ wallet.network }}</div>
                     </div>
 
                     <div class="col-md-4">
                         <div class="info-label">Assigned Admin</div>
-                        <div class="info-value">{{ wallet.assigned_admin.username|default:"-" }}</div>
+                        <div class="info-value" id="wallet-admin">{{ wallet.assigned_admin.username|default:"-" }}</div>
                     </div>
 
                     <div class="col-md-4">
                         <div class="info-label">Status</div>
-                        <div class="info-value">
+                        <div class="info-value" id="wallet-status">
                             {% if wallet.is_active %}
                                 <span class="badge text-bg-success">Active</span>
                             {% else %}
@@ -286,7 +326,7 @@
 
                     <div class="col-md-4">
                         <div class="info-label">Latest Balance (ETH)</div>
-                        <div class="info-value">
+                        <div class="info-value" id="wallet-balance-eth">
                             {% if latest_balance %}
                                 {{ latest_balance.balance_eth|format_crypto }}
                             {% else %}
@@ -297,7 +337,7 @@
 
                     <div class="col-md-4">
                         <div class="info-label">Latest Balance (USD)</div>
-                        <div class="info-value">
+                        <div class="info-value" id="wallet-balance-usd">
                             {% if latest_balance_usd is not None %}
                                 ${{ latest_balance_usd|format_crypto:2 }}
                             {% else %}
@@ -308,17 +348,17 @@
 
                     <div class="col-12">
                         <div class="info-label">Address</div>
-                        <div class="info-value mono">{{ wallet.address }}</div>
+                        <div class="info-value mono" id="wallet-address">{{ wallet.address }}</div>
                     </div>
 
                     <div class="col-md-6">
                         <div class="info-label">Created At</div>
-                        <div class="info-value">{{ wallet.created_at|date:"Y-m-d H:i" }}</div>
+                        <div class="info-value" id="wallet-created-at">{{ wallet.created_at|date:"Y-m-d H:i" }}</div>
                     </div>
 
                     <div class="col-md-6">
                         <div class="info-label">Last Synced</div>
-                        <div class="info-value">
+                        <div class="info-value" id="wallet-last-synced">
                             {% if wallet.last_synced_at %}
                                 {{ wallet.last_synced_at|date:"Y-m-d H:i" }}
                             {% else %}
@@ -353,7 +393,7 @@
                         <div class="pie-wrap">
                             <canvas id="walletPieChart"></canvas>
                         </div>
-                        <div class="text-muted mt-3">Total transactions: {{ total_tx_count }}</div>
+                        <div class="text-muted mt-3">Total transactions: <span id="wallet-total-tx-count">{{ total_tx_count }}</span></div>
                     </div>
                 </div>
             </div>
@@ -390,13 +430,17 @@
         const snapshotsContainer = document.getElementById("snapshots-container");
         const transactionsContainer = document.getElementById("transactions-container");
 
-        const chartLabels = JSON.parse(document.getElementById("chart-labels").textContent);
-        const chartValues = JSON.parse(document.getElementById("chart-values").textContent);
-        const walletPieLabels = JSON.parse(document.getElementById("wallet-pie-labels").textContent);
-        const walletPieValues = JSON.parse(document.getElementById("wallet-pie-values").textContent);
+        let currentSnapshotPage = 1;
+        let currentTxPage = 1;
+
+        let chartLabels = JSON.parse(document.getElementById("chart-labels").textContent);
+        let chartValues = JSON.parse(document.getElementById("chart-values").textContent);
+        let walletPieLabels = JSON.parse(document.getElementById("wallet-pie-labels").textContent);
+        let walletPieValues = JSON.parse(document.getElementById("wallet-pie-values").textContent);
 
         let balanceLineChart = null;
         let walletPieChart = null;
+        let lastWalletSignature = null;
 
         function currentTheme() {
             return document.documentElement.getAttribute("data-theme");
@@ -422,89 +466,107 @@
             const lineCanvas = document.getElementById("balanceChart");
             const pieCanvas = document.getElementById("walletPieChart");
 
-            if (balanceLineChart) {
-                balanceLineChart.destroy();
-            }
-            if (walletPieChart) {
-                walletPieChart.destroy();
-            }
-
             if (lineCanvas && chartLabels.length > 0 && chartValues.length > 0) {
-                balanceLineChart = new Chart(lineCanvas, {
-                    type: "line",
-                    data: {
-                        labels: chartLabels,
-                        datasets: [{
-                            label: "Balance (ETH)",
-                            data: chartValues,
-                            tension: 0.3,
-                            borderColor: "#4ea8ff",
-                            backgroundColor: "rgba(78, 168, 255, 0.18)",
-                            pointBackgroundColor: "#4ea8ff",
-                            pointBorderColor: "#4ea8ff",
-                            pointRadius: 3
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                labels: {
-                                    color: chartTextColor(),
-                                    font: {
-                                        size: 12,
-                                        weight: "600"
+                const lineData = {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: "Balance (ETH)",
+                        data: chartValues,
+                        tension: 0.3,
+                        borderColor: "#4ea8ff",
+                        backgroundColor: "rgba(78, 168, 255, 0.18)",
+                        pointBackgroundColor: "#4ea8ff",
+                        pointBorderColor: "#4ea8ff",
+                        pointRadius: 3
+                    }]
+                };
+
+                if (!balanceLineChart) {
+                    balanceLineChart = new Chart(lineCanvas, {
+                        type: "line",
+                        data: lineData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 450,
+                                easing: "easeOutQuart"
+                            },
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: chartTextColor(),
+                                        font: { size: 12, weight: "600" }
                                     }
                                 }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                ticks: { color: chartTextColor() },
-                                grid: { color: chartGridColor() }
                             },
-                            y: {
-                                beginAtZero: false,
-                                ticks: { color: chartTextColor() },
-                                grid: { color: chartGridColor() }
+                            scales: {
+                                x: {
+                                    ticks: { color: chartTextColor() },
+                                    grid: { color: chartGridColor() }
+                                },
+                                y: {
+                                    beginAtZero: false,
+                                    ticks: { color: chartTextColor() },
+                                    grid: { color: chartGridColor() }
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                } else {
+                    balanceLineChart.data.labels = [...chartLabels];
+                    balanceLineChart.data.datasets[0].data = [...chartValues];
+                    balanceLineChart.options.plugins.legend.labels.color = chartTextColor();
+                    balanceLineChart.options.scales.x.ticks.color = chartTextColor();
+                    balanceLineChart.options.scales.x.grid.color = chartGridColor();
+                    balanceLineChart.options.scales.y.ticks.color = chartTextColor();
+                    balanceLineChart.options.scales.y.grid.color = chartGridColor();
+                    balanceLineChart.update();
+                }
             }
 
             if (pieCanvas && walletPieLabels.length > 0 && walletPieValues.length > 0) {
-                walletPieChart = new Chart(pieCanvas, {
-                    type: "doughnut",
-                    data: {
-                        labels: walletPieLabels,
-                        datasets: [{
-                            data: walletPieValues,
-                            backgroundColor: ["#4ea8ff", "#fb7185"],
-                            borderColor: chartBorderColor(),
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: "bottom",
-                                labels: {
-                                    color: chartTextColor(),
-                                    boxWidth: 14,
-                                    padding: 16,
-                                    font: {
-                                        size: 12,
-                                        weight: "600"
+                const pieData = {
+                    labels: walletPieLabels,
+                    datasets: [{
+                        data: walletPieValues,
+                        backgroundColor: ["#4ea8ff", "#fb7185"],
+                        borderColor: chartBorderColor(),
+                        borderWidth: 2
+                    }]
+                };
+
+                if (!walletPieChart) {
+                    walletPieChart = new Chart(pieCanvas, {
+                        type: "doughnut",
+                        data: pieData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 450,
+                                easing: "easeOutQuart"
+                            },
+                            plugins: {
+                                legend: {
+                                    position: "bottom",
+                                    labels: {
+                                        color: chartTextColor(),
+                                        boxWidth: 14,
+                                        padding: 16,
+                                        font: { size: 12, weight: "600" }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                } else {
+                    walletPieChart.data.labels = [...walletPieLabels];
+                    walletPieChart.data.datasets[0].data = [...walletPieValues];
+                    walletPieChart.data.datasets[0].borderColor = chartBorderColor();
+                    walletPieChart.options.plugins.legend.labels.color = chartTextColor();
+                    walletPieChart.update();
+                }
             }
         }
 
@@ -524,17 +586,16 @@
                     copyText(btn.dataset.copy);
                     const original = btn.textContent;
                     btn.textContent = "Copied";
-                    setTimeout(() => {
-                        btn.textContent = original;
-                    }, 800);
+                    setTimeout(() => { btn.textContent = original; }, 800);
                 });
             });
         }
 
         async function loadSnapshots(page = 1) {
+            currentSnapshotPage = parseInt(page);
             const form = snapshotsContainer.querySelector("#wallet-snapshots-form");
             const params = new URLSearchParams(new FormData(form));
-            params.set("snapshot_page", page);
+            params.set("snapshot_page", currentSnapshotPage);
 
             const response = await fetch(`/wallets/${walletId}/snapshots/?${params.toString()}`);
             const html = await response.text();
@@ -544,15 +605,71 @@
         }
 
         async function loadTransactions(page = 1) {
+            currentTxPage = parseInt(page);
             const form = transactionsContainer.querySelector("#wallet-transactions-form");
             const params = new URLSearchParams(new FormData(form));
-            params.set("tx_page", page);
+            params.set("tx_page", currentTxPage);
 
             const response = await fetch(`/wallets/${walletId}/transactions/?${params.toString()}`);
             const html = await response.text();
             transactionsContainer.innerHTML = html;
             bindTransactionControls();
             bindCopyButtons(transactionsContainer);
+        }
+
+        function buildWalletSignature(data) {
+            return JSON.stringify({
+                label: data.wallet.label,
+                network: data.wallet.network,
+                assigned_admin: data.wallet.assigned_admin,
+                is_active: data.wallet.is_active,
+                latest_balance_eth: data.wallet.latest_balance_eth,
+                latest_balance_usd: data.wallet.latest_balance_usd,
+                address: data.wallet.address,
+                created_at: data.wallet.created_at,
+                last_synced_at: data.wallet.last_synced_at,
+                total_tx_count: data.total_tx_count,
+                line_chart_labels: data.line_chart.labels || [],
+                line_chart_values: data.line_chart.values || [],
+                pie_chart_labels: data.pie_chart.labels || [],
+                pie_chart_values: data.pie_chart.values || [],
+            });
+        }
+
+        async function refreshWalletRealtimeData() {
+            const response = await fetch(`/live/wallets/${walletId}/realtime-data/`);
+            const data = await response.json();
+
+            const newSignature = buildWalletSignature(data);
+
+            if (lastWalletSignature !== null && lastWalletSignature === newSignature) {
+                return false;
+            }
+
+            lastWalletSignature = newSignature;
+
+            document.getElementById("wallet-label").textContent = data.wallet.label;
+            document.getElementById("wallet-network").textContent = data.wallet.network;
+            document.getElementById("wallet-admin").textContent = data.wallet.assigned_admin;
+            document.getElementById("wallet-balance-eth").textContent = data.wallet.latest_balance_eth;
+            document.getElementById("wallet-balance-usd").textContent = data.wallet.latest_balance_usd === "-" ? "-" : `$${data.wallet.latest_balance_usd}`;
+            document.getElementById("wallet-address").textContent = data.wallet.address;
+            document.getElementById("wallet-created-at").textContent = data.wallet.created_at;
+            document.getElementById("wallet-last-synced").textContent = data.wallet.last_synced_at;
+            document.getElementById("wallet-status").innerHTML = data.wallet.is_active
+                ? '<span class="badge text-bg-success">Active</span>'
+                : '<span class="badge text-bg-secondary">Inactive</span>';
+
+            document.getElementById("wallet-total-tx-count").textContent = data.total_tx_count;
+
+            chartLabels = data.line_chart.labels || [];
+            chartValues = data.line_chart.values || [];
+            walletPieLabels = data.pie_chart.labels || [];
+            walletPieValues = data.pie_chart.values || [];
+
+            renderCharts();
+
+            return true;
         }
 
         function bindSnapshotControls() {
@@ -605,6 +722,26 @@
             });
         }
 
+        function connectWalletSocket() {
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            const socket = new WebSocket(`${protocol}://${window.location.host}/ws/wallet/${walletId}/`);
+
+            socket.onmessage = async function () {
+                const changed = await refreshWalletRealtimeData();
+
+                if (!changed) {
+                    return;
+                }
+
+                await loadSnapshots(currentSnapshotPage);
+                await loadTransactions(currentTxPage);
+            };
+
+            socket.onclose = function () {
+                setTimeout(connectWalletSocket, 2000);
+            };
+        }
+
         const savedTheme = localStorage.getItem("wallet-theme") || "dark";
         applyTheme(savedTheme);
 
@@ -617,6 +754,8 @@
         bindSnapshotControls();
         bindTransactionControls();
         bindCopyButtons(document);
+        renderCharts();
+        connectWalletSocket();
     </script>
 </body>
 </html>

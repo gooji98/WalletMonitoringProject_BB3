@@ -1,0 +1,1 @@
+pip install django python-dotenv openpyxl requests psycopg[binary] apscheduler

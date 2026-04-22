@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path 
+
 from .views import (
     dashboard,
     dashboard_wallets_partial,
@@ -11,6 +12,8 @@ from .views import (
     export_wallet_transactions_csv,
     export_wallet_snapshots_csv,
     export_dashboard_summary_xlsx,
+    dashboard_realtime_data,
+    wallet_realtime_data,
 )
 
 urlpatterns = [
@@ -27,4 +30,6 @@ urlpatterns = [
     path("wallets/<int:wallet_id>/transactions/", wallet_transactions_partial, name="wallet_transactions_partial"),
     path("wallets/<int:wallet_id>/transactions/export-csv/", export_wallet_transactions_csv, name="export_wallet_transactions_csv"),
     path("wallets/<int:wallet_id>/snapshots/export-csv/", export_wallet_snapshots_csv, name="export_wallet_snapshots_csv"),
+    path("live/dashboard/realtime-data/", dashboard_realtime_data, name="dashboard_realtime_data"),
+    path("live/wallets/<int:wallet_id>/realtime-data/", wallet_realtime_data, name="wallet_realtime_data"),
 ]

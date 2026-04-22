@@ -55,3 +55,27 @@ class TransactionSnapshot(models.Model):
 
     def __str__(self):
         return self.tx_hash
+    
+class SyncLog(models.Model):
+    STATUS_CHOICES = [
+        ("success", "Success"),
+        ("failed", "Failed"),
+    ]
+
+    wallet = models.ForeignKey(
+        Wallet,
+        on_delete=models.CASCADE,
+        related_name="sync_logs",
+        null=True,
+        blank=True,
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    started_at = models.DateTimeField()
+    finished_at = models.DateTimeField(null=True, blank=True)
+    message = models.TextField(blank=True)
+    source = models.CharField(max_length=50, default="celery")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        wallet_label = self.wallet.label if self.wallet and self.wallet.label else "system"
+        return f"{wallet_label} - {self.status} - {self.started_at:%Y-%m-%d %H:%M:%S}"

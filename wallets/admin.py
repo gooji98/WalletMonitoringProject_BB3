@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Wallet, BalanceSnapshot, TransactionSnapshot
+from .models import Wallet, BalanceSnapshot, TransactionSnapshot, SyncLog
 from .sync import sync_wallet
 
 
@@ -286,3 +286,61 @@ class TransactionSnapshotAdmin(admin.ModelAdmin):
     def short_tx_hash(self, obj):
         return f"{obj.tx_hash[:12]}...{obj.tx_hash[-6:]}"
     short_tx_hash.short_description = "Tx Hash"
+
+
+@admin.register(SyncLog)
+class SyncLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "wallet",
+        "status",
+        "source",
+        "started_at",
+        "finished_at",
+        "short_message",
+    )
+    list_filter = (
+        "status",
+        "source",
+        "started_at",
+        "finished_at",
+        "wallet__network",
+        "wallet__assigned_admin",
+    )
+    search_fields = (
+        "wallet__label",
+        "wallet__address",
+        "message",
+    )
+    ordering = ("-started_at",)
+    autocomplete_fields = ("wallet",)
+    date_hierarchy = "started_at"
+    readonly_fields = (
+        "wallet",
+        "status",
+        "source",
+        "started_at",
+        "finished_at",
+        "message",
+        "created_at",
+    )
+
+    def short_message(self, obj):
+        if not obj.message:
+            return "-"
+        if len(obj.message) > 80:
+            return obj.message[:80] + "..."
+        return obj.message
+    short_message.short_description = "Message"
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related("wallet", "wallet__assigned_admin")
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(wallet__assigned_admin=request.user)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser

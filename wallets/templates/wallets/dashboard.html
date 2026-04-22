@@ -23,6 +23,8 @@
             --copy-bg: #ffffff;
             --copy-hover: #eef2f7;
             --chart-grid: rgba(100, 116, 139, 0.15);
+            --export-start: #2563eb;
+            --export-end: #1d4ed8;
         }
 
         html[data-theme="dark"] {
@@ -41,6 +43,8 @@
             --copy-bg: #14233d;
             --copy-hover: #1a2d4d;
             --chart-grid: rgba(169, 186, 211, 0.12);
+            --export-start: #3b82f6;
+            --export-end: #2563eb;
         }
 
         body {
@@ -48,7 +52,10 @@
             color: var(--text);
         }
 
-        .page-title { font-weight: 800; letter-spacing: -0.6px; }
+        .page-title {
+            font-weight: 800;
+            letter-spacing: -0.6px;
+        }
 
         .section-card,
         .kpi-card {
@@ -59,14 +66,38 @@
             overflow: hidden;
         }
 
-        .kpi-card { height: 100%; }
+        .kpi-card {
+            height: 100%;
+        }
 
-        .kpi-label { font-size: 0.88rem; color: var(--muted); margin-bottom: 0.45rem; }
-        .kpi-value { font-size: 1.85rem; font-weight: 800; line-height: 1; color: var(--text); }
-        .section-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 0; color: var(--text); }
+        .kpi-label {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 0.45rem;
+        }
 
-        .wallet-link { text-decoration: none; font-weight: 600; }
-        .wallet-link:hover { text-decoration: underline; }
+        .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--text);
+        }
+
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: 0;
+            color: var(--text);
+        }
+
+        .wallet-link {
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .wallet-link:hover {
+            text-decoration: underline;
+        }
 
         .mono {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -98,7 +129,10 @@
             border-color: var(--border);
         }
 
-        .table-wrap { overflow-x: auto; border-radius: 14px; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 14px;
+        }
 
         .filter-grid .form-control,
         .filter-grid .form-select {
@@ -112,7 +146,9 @@
             border-radius: 10px;
         }
 
-        .filter-grid .form-control::placeholder { color: var(--muted); }
+        .filter-grid .form-control::placeholder {
+            color: var(--muted);
+        }
 
         .filter-grid .btn {
             min-height: 36px;
@@ -122,10 +158,23 @@
             border-radius: 10px;
         }
 
-        .card-fixed-height { min-height: 540px; }
-        .table-sm td, .table-sm th { padding-top: 0.6rem; padding-bottom: 0.6rem; }
-        .nowrap { white-space: nowrap; }
-        .summary-actions { flex-wrap: wrap; }
+        .card-fixed-height {
+            min-height: 540px;
+        }
+
+        .table-sm td,
+        .table-sm th {
+            padding-top: 0.6rem;
+            padding-bottom: 0.6rem;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        .summary-actions {
+            flex-wrap: wrap;
+        }
 
         .copy-btn {
             border: 1px solid var(--input-border);
@@ -140,9 +189,19 @@
             cursor: pointer;
         }
 
-        .copy-btn:hover { background: var(--copy-hover); }
-        .inline-copy { display: inline-flex; align-items: center; }
-        .small-muted { font-size: 0.76rem; color: var(--muted); }
+        .copy-btn:hover {
+            background: var(--copy-hover);
+        }
+
+        .inline-copy {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .small-muted {
+            font-size: 0.76rem;
+            color: var(--muted);
+        }
 
         .theme-toggle {
             min-width: 148px;
@@ -154,11 +213,46 @@
             box-shadow: var(--shadow);
         }
 
-        .theme-toggle:hover { border-color: #60a5fa; color: #60a5fa; }
-        .text-muted { color: var(--muted) !important; }
+        .theme-toggle:hover {
+            border-color: #60a5fa;
+            color: #60a5fa;
+        }
 
-        .chart-card { min-height: 420px; }
-        .pie-wrap { min-height: 280px; position: relative; }
+        .export-btn {
+            min-width: 210px;
+            border: 0;
+            border-radius: 999px;
+            padding: 0.7rem 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--export-start), var(--export-end));
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+        }
+
+        .export-btn:hover {
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(37, 99, 235, 0.28);
+            opacity: 0.96;
+        }
+
+        .export-btn:active {
+            transform: translateY(0);
+        }
+
+        .text-muted {
+            color: var(--muted) !important;
+        }
+
+        .chart-card {
+            min-height: 420px;
+        }
+
+        .pie-wrap {
+            min-height: 280px;
+            position: relative;
+        }
 
         .badge.text-bg-light {
             background: transparent !important;
@@ -182,10 +276,9 @@
             </div>
             <div class="d-flex gap-2 summary-actions">
                 <button type="button" id="theme-toggle" class="btn theme-toggle">🌙 Dark mode</button>
-                <a href="{% url 'export_dashboard_summary_xlsx' %}" id="export-summary-btn" class="btn btn-outline-primary px-4">
+                <a href="{% url 'export_dashboard_summary_xlsx' %}" id="export-summary-btn" class="btn export-btn">
                     Export Summary XLSX
                 </a>
-                <a href="{% url 'sync_now' %}" class="btn btn-primary px-4">Sync Now</a>
             </div>
         </div>
 
@@ -199,16 +292,36 @@
 
         <div class="row g-3 mb-4">
             <div class="col-sm-6 col-xl-3">
-                <div class="card kpi-card"><div class="card-body"><div class="kpi-label">Total Wallets</div><div class="kpi-value">{{ total_wallets }}</div></div></div>
+                <div class="card kpi-card">
+                    <div class="card-body">
+                        <div class="kpi-label">Total Wallets</div>
+                        <div class="kpi-value" id="kpi-total-wallets">{{ total_wallets }}</div>
+                    </div>
+                </div>
             </div>
             <div class="col-sm-6 col-xl-3">
-                <div class="card kpi-card"><div class="card-body"><div class="kpi-label">Active Wallets</div><div class="kpi-value">{{ active_wallets }}</div></div></div>
+                <div class="card kpi-card">
+                    <div class="card-body">
+                        <div class="kpi-label">Active Wallets</div>
+                        <div class="kpi-value" id="kpi-active-wallets">{{ active_wallets }}</div>
+                    </div>
+                </div>
             </div>
             <div class="col-sm-6 col-xl-3">
-                <div class="card kpi-card"><div class="card-body"><div class="kpi-label">Balance Snapshots</div><div class="kpi-value">{{ total_balance_snapshots }}</div></div></div>
+                <div class="card kpi-card">
+                    <div class="card-body">
+                        <div class="kpi-label">Balance Snapshots</div>
+                        <div class="kpi-value" id="kpi-balance-snapshots">{{ total_balance_snapshots }}</div>
+                    </div>
+                </div>
             </div>
             <div class="col-sm-6 col-xl-3">
-                <div class="card kpi-card"><div class="card-body"><div class="kpi-label">Transactions</div><div class="kpi-value">{{ total_transactions }}</div></div></div>
+                <div class="card kpi-card">
+                    <div class="card-body">
+                        <div class="kpi-label">Transactions</div>
+                        <div class="kpi-value" id="kpi-transactions">{{ total_transactions }}</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -251,10 +364,15 @@
         const dashboardTransactionsContainer = document.getElementById("dashboard-transactions-container");
         const exportSummaryBtn = document.getElementById("export-summary-btn");
         const themeToggleBtn = document.getElementById("theme-toggle");
-        const dashboardPieLabels = JSON.parse(document.getElementById("dashboard-pie-labels").textContent);
-        const dashboardPieValues = JSON.parse(document.getElementById("dashboard-pie-values").textContent);
+
+        let currentWalletPage = 1;
+        let currentDtxPage = 1;
+
+        let dashboardPieLabels = JSON.parse(document.getElementById("dashboard-pie-labels").textContent);
+        let dashboardPieValues = JSON.parse(document.getElementById("dashboard-pie-values").textContent);
 
         let dashboardPieChart = null;
+        let lastDashboardSignature = null;
 
         function currentTheme() {
             return document.documentElement.getAttribute("data-theme");
@@ -272,47 +390,58 @@
             return currentTheme() === "dark" ? "#0f1b31" : "#ffffff";
         }
 
-        function applyTheme(theme) {
-            document.documentElement.setAttribute("data-theme", theme);
-            themeToggleBtn.textContent = themeButtonLabel(theme);
-            renderDashboardPieChart();
-        }
-
         function renderDashboardPieChart() {
             const canvas = document.getElementById("dashboardPieChart");
             if (!canvas || dashboardPieLabels.length === 0 || dashboardPieValues.length === 0) return;
 
-            if (dashboardPieChart) {
-                dashboardPieChart.destroy();
-            }
+            const chartData = {
+                labels: dashboardPieLabels,
+                datasets: [{
+                    data: dashboardPieValues,
+                    backgroundColor: ["#60a5fa", "#34d399", "#f59e0b", "#f87171", "#a78bfa", "#22d3ee", "#fb7185", "#4ade80"],
+                    borderColor: chartBorderColor(),
+                    borderWidth: 2
+                }]
+            };
 
-            dashboardPieChart = new Chart(canvas, {
-                type: "doughnut",
-                data: {
-                    labels: dashboardPieLabels,
-                    datasets: [{
-                        data: dashboardPieValues,
-                        backgroundColor: ["#60a5fa", "#34d399", "#f59e0b", "#f87171", "#a78bfa", "#22d3ee", "#fb7185", "#4ade80"],
-                        borderColor: chartBorderColor(),
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "bottom",
-                            labels: {
-                                color: chartTextColor(),
-                                boxWidth: 14,
-                                padding: 16,
-                                font: { size: 12, weight: "600" }
+            if (!dashboardPieChart) {
+                dashboardPieChart = new Chart(canvas, {
+                    type: "doughnut",
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 450,
+                            easing: "easeOutQuart"
+                        },
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: {
+                                    color: chartTextColor(),
+                                    boxWidth: 14,
+                                    padding: 16,
+                                    font: { size: 12, weight: "600" }
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+                return;
+            }
+
+            dashboardPieChart.data.labels = [...dashboardPieLabels];
+            dashboardPieChart.data.datasets[0].data = [...dashboardPieValues];
+            dashboardPieChart.data.datasets[0].borderColor = chartBorderColor();
+            dashboardPieChart.options.plugins.legend.labels.color = chartTextColor();
+            dashboardPieChart.update();
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            themeToggleBtn.textContent = themeButtonLabel(theme);
+            renderDashboardPieChart();
         }
 
         function copyText(value) {
@@ -325,7 +454,9 @@
                     copyText(btn.dataset.copy);
                     const original = btn.textContent;
                     btn.textContent = "Copied";
-                    setTimeout(() => { btn.textContent = original; }, 800);
+                    setTimeout(() => {
+                        btn.textContent = original;
+                    }, 800);
                 });
             });
         }
@@ -347,8 +478,8 @@
         }
 
         function updateExportSummaryHref() {
-            const walletParams = buildDashboardWalletParams(1);
-            const txParams = buildDashboardTransactionParams(1);
+            const walletParams = buildDashboardWalletParams(currentWalletPage);
+            const txParams = buildDashboardTransactionParams(currentDtxPage);
             const allParams = new URLSearchParams();
 
             for (const [key, value] of walletParams.entries()) allParams.set(key, value);
@@ -358,7 +489,8 @@
         }
 
         async function loadDashboardWallets(page = 1) {
-            const params = buildDashboardWalletParams(page);
+            currentWalletPage = parseInt(page);
+            const params = buildDashboardWalletParams(currentWalletPage);
             const response = await fetch(`{% url 'dashboard_wallets_partial' %}?${params.toString()}`);
             walletsContainer.innerHTML = await response.text();
             bindDashboardWalletControls();
@@ -367,12 +499,48 @@
         }
 
         async function loadDashboardTransactions(page = 1) {
-            const params = buildDashboardTransactionParams(page);
+            currentDtxPage = parseInt(page);
+            const params = buildDashboardTransactionParams(currentDtxPage);
             const response = await fetch(`{% url 'dashboard_transactions_partial' %}?${params.toString()}`);
             dashboardTransactionsContainer.innerHTML = await response.text();
             bindDashboardTransactionControls();
             bindCopyButtons(dashboardTransactionsContainer);
             updateExportSummaryHref();
+        }
+
+        function buildDashboardSignature(data) {
+            return JSON.stringify({
+                total_wallets: data.kpis.total_wallets,
+                active_wallets: data.kpis.active_wallets,
+                total_balance_snapshots: data.kpis.total_balance_snapshots,
+                total_transactions: data.kpis.total_transactions,
+                pie_labels: data.pie.labels || [],
+                pie_values: data.pie.values || [],
+            });
+        }
+
+        async function refreshDashboardRealtimeData() {
+            const response = await fetch("{% url 'dashboard_realtime_data' %}");
+            const data = await response.json();
+
+            const newSignature = buildDashboardSignature(data);
+
+            if (lastDashboardSignature !== null && lastDashboardSignature === newSignature) {
+                return false;
+            }
+
+            lastDashboardSignature = newSignature;
+
+            document.getElementById("kpi-total-wallets").textContent = data.kpis.total_wallets;
+            document.getElementById("kpi-active-wallets").textContent = data.kpis.active_wallets;
+            document.getElementById("kpi-balance-snapshots").textContent = data.kpis.total_balance_snapshots;
+            document.getElementById("kpi-transactions").textContent = data.kpis.total_transactions;
+
+            dashboardPieLabels = data.pie.labels || [];
+            dashboardPieValues = data.pie.values || [];
+            renderDashboardPieChart();
+
+            return true;
         }
 
         function bindDashboardWalletControls() {
@@ -425,6 +593,26 @@
             });
         }
 
+        function connectDashboardSocket() {
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            const socket = new WebSocket(`${protocol}://${window.location.host}/ws/dashboard/`);
+
+            socket.onmessage = async function () {
+                const changed = await refreshDashboardRealtimeData();
+
+                if (!changed) {
+                    return;
+                }
+
+                await loadDashboardWallets(currentWalletPage);
+                await loadDashboardTransactions(currentDtxPage);
+            };
+
+            socket.onclose = function () {
+                setTimeout(connectDashboardSocket, 2000);
+            };
+        }
+
         const savedTheme = localStorage.getItem("wallet-theme") || "dark";
         applyTheme(savedTheme);
 
@@ -438,6 +626,8 @@
         bindDashboardTransactionControls();
         bindCopyButtons(document);
         updateExportSummaryHref();
+        renderDashboardPieChart();
+        connectDashboardSocket();
     </script>
 </body>
 </html>
