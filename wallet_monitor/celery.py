@@ -10,7 +10,7 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
-    "sync-active-wallets-every-2-minutes": {
+    "sync-active-wallets-every-1-minutes": {
         "task": "wallets.tasks.sync_active_wallets_task",
         "schedule": 60.0,
     },
